@@ -10,13 +10,13 @@
 	</parent>
 	<groupId>de.leipzig.htwk.gitrdf</groupId>
 	<artifactId>listener</artifactId>
-	<version>0.0.1-SNAPSHOT</version>
+	<version>1.0.0-SNAPSHOT</version>
 	<name>listener</name>
 	<description>Archetype project for HTWK Leipzig - Project to transform git to RDF</description>
 	<properties>
 		<java.version>21</java.version>
 
-		<de.leipzig.htwk.gitrdf.database.common.version>1.0.6-SNAPSHOT</de.leipzig.htwk.gitrdf.database.common.version>
+		<de.leipzig.htwk.gitrdf.database.common.version>1.0.8-SNAPSHOT</de.leipzig.htwk.gitrdf.database.common.version>
 	</properties>
 	<dependencies>
 
@@ -88,21 +88,28 @@
 
 	</dependencies>
 
-	<build>
-		<plugins>
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <version>3.11.0</version>
+        <configuration>
+          <!-- NO -proc:none here -->
+          <annotationProcessorPaths>
+            <path>
+              <groupId>org.projectlombok</groupId>
+              <artifactId>lombok</artifactId>
+              <version>1.18.38</version>
+            </path>
+          </annotationProcessorPaths>
+        </configuration>
+      </plugin>
 			<plugin>
-				<groupId>org.springframework.boot</groupId>
-				<artifactId>spring-boot-maven-plugin</artifactId>
-				<configuration>
-					<excludes>
-						<exclude>
-							<groupId>org.projectlombok</groupId>
-							<artifactId>lombok</artifactId>
-						</exclude>
-					</excludes>
-				</configuration>
+					<groupId>org.springframework.boot</groupId>
+					<artifactId>spring-boot-maven-plugin</artifactId>
 			</plugin>
-		</plugins>
-	</build>
+    </plugins>
+  </build>
 
 </project>

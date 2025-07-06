@@ -1,11 +1,11 @@
 package de.leipzig.htwk.gitrdf.listener.api.model.request.composite.filter;
 
-import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.EqualsAndHashCode;
+import static de.leipzig.htwk.gitrdf.listener.api.model.request.composite.filter.RepoFilterRequestModel.returnValueOrFalseIfNull;
 
 import java.beans.ConstructorProperties;
 
-import static de.leipzig.htwk.gitrdf.listener.api.model.request.composite.filter.RepoFilterRequestModel.returnValueOrFalseIfNull;
+import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.EqualsAndHashCode;
 
 @EqualsAndHashCode
 public class GithubIssueFilterRequestModel {
@@ -22,7 +22,7 @@ public class GithubIssueFilterRequestModel {
             true,
             true,
             true,
-            true);
+            true, true, true, true, true);
 
     public static final GithubIssueFilterRequestModel DISABLED = new GithubIssueFilterRequestModel(
             false,
@@ -36,7 +36,9 @@ public class GithubIssueFilterRequestModel {
             false,
             false,
             false,
-            false);
+            false,
+            false,
+            false, false, false);
 
     private final Boolean enableIssueId;
 
@@ -62,6 +64,13 @@ public class GithubIssueFilterRequestModel {
 
     private final Boolean enableIssueClosedAt;
 
+    private final Boolean enableIssueComments;
+
+    private final Boolean enableIssueMergedBy;
+
+    private final Boolean enableIssueMergedInfo;
+
+    private final Boolean enableIssueReviewers;
 
     @ConstructorProperties({
             "enableIssueId",
@@ -75,7 +84,11 @@ public class GithubIssueFilterRequestModel {
             "enableIssueMilestone",
             "enableIssueCreatedAt",
             "enableIssueUpdatedAt",
-            "enableIssueClosedAt"})
+            "enableIssueClosedAt",
+            "enableIssueComments",
+            "enableIssueMergedBy",
+            "enableIssueMergedInfo",
+            "enableIssueReviewers" })
     public GithubIssueFilterRequestModel(
             Boolean enableIssueId,
             Boolean enableIssueNumber,
@@ -88,7 +101,11 @@ public class GithubIssueFilterRequestModel {
             Boolean enableIssueMilestone,
             Boolean enableIssueCreatedAt,
             Boolean enableIssueUpdatedAt,
-            Boolean enableIssueClosedAt) {
+            Boolean enableIssueClosedAt,
+            Boolean enableIssueComments,
+            Boolean enableIssueMergedBy,
+            Boolean enableIssueMergedInfo,
+            Boolean enableIssueReviewers) {
 
         this.enableIssueId = enableIssueId;
         this.enableIssueNumber = enableIssueNumber;
@@ -102,6 +119,10 @@ public class GithubIssueFilterRequestModel {
         this.enableIssueCreatedAt = enableIssueCreatedAt;
         this.enableIssueUpdatedAt = enableIssueUpdatedAt;
         this.enableIssueClosedAt = enableIssueClosedAt;
+        this.enableIssueComments = enableIssueComments;
+        this.enableIssueMergedBy = enableIssueMergedBy;
+        this.enableIssueMergedInfo = enableIssueMergedInfo;
+        this.enableIssueReviewers = enableIssueReviewers;
     }
 
     public boolean areAllFilterOptionsDisabled() {
@@ -116,7 +137,11 @@ public class GithubIssueFilterRequestModel {
                 && !isIssueMilestoneEnabled()
                 && !isIssueCreatedAtEnabled()
                 && !isIssueUpdatedAtEnabled()
-                && !isIssueClosedAtEnabled();
+                && !isIssueClosedAtEnabled()
+                && !isEnableIssueComments()
+                && !isEnableIssueMergedBy()
+                && !isEnableIssueMergedBy()
+                && !isEnableIssueReviewers();
     }
 
     @Schema(hidden = true)
@@ -178,4 +203,25 @@ public class GithubIssueFilterRequestModel {
     public Boolean isIssueClosedAtEnabled() {
         return returnValueOrFalseIfNull(enableIssueClosedAt);
     }
+
+    @Schema(hidden = true)
+    public Boolean isEnableIssueComments() {
+        return returnValueOrFalseIfNull(enableIssueComments);
+    }
+
+    @Schema(hidden = true)
+    public Boolean isEnableIssueReviewers() {
+        return returnValueOrFalseIfNull(enableIssueReviewers);
+    }
+
+    @Schema(hidden = true)
+    public Boolean isEnableIssueMergedBy() {
+        return returnValueOrFalseIfNull(enableIssueMergedBy);
+    }
+
+    @Schema(hidden = true)
+    public Boolean isEnableIssueMergedInfo() {
+        return returnValueOrFalseIfNull(enableIssueMergedInfo);
+    }
+
 }

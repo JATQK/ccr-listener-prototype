@@ -1,12 +1,13 @@
 package de.leipzig.htwk.gitrdf.listener.factory;
 
+import org.springframework.stereotype.Component;
+
 import de.leipzig.htwk.gitrdf.database.common.entity.GitCommitRepositoryFilter;
 import de.leipzig.htwk.gitrdf.database.common.entity.GithubIssueRepositoryFilter;
 import de.leipzig.htwk.gitrdf.database.common.entity.GithubRepositoryFilter;
 import de.leipzig.htwk.gitrdf.listener.api.model.request.composite.filter.GitCommitFilterRequestModel;
 import de.leipzig.htwk.gitrdf.listener.api.model.request.composite.filter.GithubIssueFilterRequestModel;
 import de.leipzig.htwk.gitrdf.listener.api.model.request.composite.filter.RepoFilterRequestModel;
-import org.springframework.stereotype.Component;
 
 @Component
 public class GithubRepositoryFilterFactory {
@@ -61,7 +62,11 @@ public class GithubRepositoryFilterFactory {
                 model.isIssueMilestoneEnabled(),
                 model.isIssueCreatedAtEnabled(),
                 model.isIssueUpdatedAtEnabled(),
-                model.isIssueClosedAtEnabled());
+                model.isIssueClosedAtEnabled(),
+                model.isEnableIssueReviewers(),
+                model.isEnableIssueMergedBy(),
+                model.isEnableIssueMergedInfo(),
+                model.isEnableIssueComments());
     }
 
 }
