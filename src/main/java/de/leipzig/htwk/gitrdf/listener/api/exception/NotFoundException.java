@@ -16,6 +16,17 @@ public class NotFoundException extends RuntimeException {
         return new NotFoundException(message, status, reason, solution);
     }
 
+    public static NotFoundException metricRatingEntryNotFound(long id) {
+
+        String status = "Not found";
+        String reason = String.format("No metric rating entry found for id '%d'", id);
+        String solution = "Provide an id for an existing metric rating entry";
+
+        String message = getMessageFrom(status, reason, solution);
+
+        return new NotFoundException(message, status, reason, solution);
+    }
+
     private final String status;
     private final String reason;
     private final String solution;

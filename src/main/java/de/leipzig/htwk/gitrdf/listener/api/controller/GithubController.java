@@ -35,6 +35,8 @@ import de.leipzig.htwk.gitrdf.listener.api.model.response.error.BadRequestErrorR
 import de.leipzig.htwk.gitrdf.listener.api.model.response.error.NotFoundErrorResponse;
 import de.leipzig.htwk.gitrdf.listener.factory.GithubRepositoryFilterFactory;
 import de.leipzig.htwk.gitrdf.listener.service.GithubService;
+import de.leipzig.htwk.gitrdf.listener.service.GithubRatingService;
+import de.leipzig.htwk.gitrdf.listener.api.model.response.GithubRepositoryOrderMetricRatingResponse;
 import de.leipzig.htwk.gitrdf.listener.utils.LongUtils;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
@@ -57,6 +59,8 @@ public class GithubController {
     private final GithubService githubService;
 
     private final GithubRepositoryFilterFactory githubRepositoryFilterFactory;
+
+    private final GithubRatingService githubRatingService;
 
     @Operation(summary = "Get all github order entries")
     @ApiResponse(
@@ -216,6 +220,50 @@ public class GithubController {
         Resource responseResource = new InputStreamResource(new BufferedInputStream(new FileInputStream(tempRdfFile)));
 
         httpServletResponse.setHeader("Content-Disposition", "attachment; filename=\"rdf.ttl\"");
+
+        return responseResource;
+    }
+
+    @Operation(summary = "Get metric ratings for a github order")
+    @ApiResponse(
+            responseCode = "200",
+            description = "All metric ratings",
+            content = @Content(
+                    mediaType = MediaType.APPLICATION_JSON_VALUE,
+                    array = @ArraySchema(schema = @Schema(implementation = GithubRepositoryOrderMetricRatingResponse.class))))
+    @GeneralInternalServerErrorApiResponse
+    @GetMapping("/rating/{orderId}")
+    public List<GithubRepositoryOrderMetricRatingResponse> getMetricRatings(@PathVariable("orderId") String orderId) {
+
+        long longId = LongUtils.convertStringToLongIdOrThrowException(orderId);
+
+        return GithubRepositoryOrderMetricRatingResponse.toList(
+                githubRatingService.findByGithubRepositoryOrderId(longId));
+    }
+
+    @Operation(summary = "Download metric rating rdf")
+    @ApiResponse(
+            responseCode = "200",
+            description = "Metric rating rdf",
+            content = @Content(mediaType = MediaType.APPLICATION_OCTET_STREAM_VALUE))
+    @ApiResponse(
+            responseCode = "404",
+            description = "Not found",
+            content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
+                    schema = @Schema(implementation = NotFoundErrorResponse.class)))
+    @GeneralInternalServerErrorApiResponse
+    @GetMapping(path = "/rating/download/{ratingId}", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
+    public @ResponseBody Resource downloadMetricRatingRdf(
+            @PathVariable("ratingId") String ratingId,
+            HttpServletResponse httpServletResponse) throws SQLException, IOException {
+
+        long longId = LongUtils.convertStringToLongIdOrThrowException(ratingId);
+
+        File tempRdfFile = githubRatingService.getTempRdfFile(longId);
+
+        Resource responseResource = new InputStreamResource(new BufferedInputStream(new FileInputStream(tempRdfFile)));
+
+        httpServletResponse.setHeader("Content-Disposition", "attachment; filename=\"metric-rating.ttl\"");
 
         return responseResource;
     }
