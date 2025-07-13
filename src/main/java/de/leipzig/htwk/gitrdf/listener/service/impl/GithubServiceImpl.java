@@ -98,11 +98,11 @@ public class GithubServiceImpl implements GithubService {
     @Override
     public void completeDelete(long id) {
 
-        GithubRepositoryOrderEntityLobs githubRepositoryOrderEntityLobs
-                = entityManager.find(GithubRepositoryOrderEntityLobs.class, id);
+        GithubRepositoryOrderEntityLobs githubRepositoryOrderEntityLobs = entityManager
+                .find(GithubRepositoryOrderEntityLobs.class, id);
 
-        GithubRepositoryOrderEntity githubRepositoryOrderEntity
-                = entityManager.find(GithubRepositoryOrderEntity.class, id);
+        GithubRepositoryOrderEntity githubRepositoryOrderEntity = entityManager.find(GithubRepositoryOrderEntity.class,
+                id);
 
         if (githubRepositoryOrderEntity == null) {
             throw NotFoundException.githubEntryNotFound(id);
@@ -111,5 +111,7 @@ public class GithubServiceImpl implements GithubService {
         entityManager.remove(githubRepositoryOrderEntityLobs);
         entityManager.remove(githubRepositoryOrderEntity);
     }
+    
+    
 
 }

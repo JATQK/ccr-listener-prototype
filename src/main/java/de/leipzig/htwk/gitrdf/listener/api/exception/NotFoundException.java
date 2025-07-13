@@ -31,4 +31,15 @@ public class NotFoundException extends RuntimeException {
     private static String getMessageFrom(String status, String reason, String solution) {
         return String.format("Status: %s, Reason: %s, Solution: %s", status, reason, solution);
     }
+
+    public static NotFoundException githubRepositoryOrderNotFound(Long id) {
+        String status = "Not found";
+        String reason = String.format("No github repository order found for id '%d'", id);
+        String solution = "Provide an id for an existing github repository order";
+
+        String message = getMessageFrom(status, reason, solution);
+
+        return new NotFoundException(message, status, reason, solution);
+    }
+
 }

@@ -19,3 +19,14 @@ springdoc:
     path: /listener-service/api-docs
   swagger-ui:
     path: /listener-service/swagger
+
+
+logging:
+  level:
+    org.hibernate.SQL: DEBUG 
+    root: info
+    de:
+      leipzig:
+        htwk:
+          gitrdf:
+            listener: debug

@@ -54,196 +54,118 @@ import lombok.extern.slf4j.Slf4j;
 @Tag(name = "Github API")
 public class GithubController {
 
-    private final GithubService githubService;
+        private final GithubService githubService;
 
-    private final GithubRepositoryFilterFactory githubRepositoryFilterFactory;
+        private final GithubRepositoryFilterFactory githubRepositoryFilterFactory;
 
-    @Operation(summary = "Get all github order entries")
-    @ApiResponse(
-            responseCode = "200",
-            description = "All github order entries",
-            content = @Content(
-                    mediaType = MediaType.APPLICATION_JSON_VALUE,
-                    array = @ArraySchema(
-                            schema = @Schema(implementation = GithubRepositoryOrderResponse.class))))
-    @GeneralInternalServerErrorApiResponse
-    @GetMapping
-    public List<GithubRepositoryOrderResponse> getAllGithubRepositoryOrderEntries() {
-        List<GithubRepositoryOrderEntity> results = githubService.findAll();
-        return  GithubRepositoryOrderResponse.toList(results);
-    }
-
-    @Operation(summary = "Add a github entry to the queue")
-    @ApiResponse(
-            responseCode = "200",
-            description = "Added the specified github entry to the queue",
-            content = @Content(
-                    mediaType = MediaType.APPLICATION_JSON_VALUE,
-                    schema = @Schema(implementation = GithubRepositorySavedResponse.class)))
-    @ApiResponse(
-            responseCode = "400",
-            description = "Bad Request",
-            content = @Content(
-                    mediaType = MediaType.APPLICATION_JSON_VALUE,
-                    schema = @Schema(implementation = BadRequestErrorResponse.class),
-                    examples = {
-                            @ExampleObject(
-                                    name = "No owner was specified",
-                                    description = "No owner was specified",
-                                    value = "{\"status\": \"Bad Request\", \"reason\": \"No owner was specified\", \"solution\": \"Specify an owner. For example: 'dotnet' (who is the owner for example of the repo 'core')\"}"),
-                            @ExampleObject(
-                                    name = "No repository was specified",
-                                    description = "No repository was specified",
-                                    value = "{\"status\": \"Bad Request\", \"reason\": \"No repository was specified\", \"solution\": \"Specify a repository. For example: 'core' (the owner 'dotnet' provides for example a 'core' repository)\"}")}))
-    @GeneralInternalServerErrorApiResponse
-    @PostMapping("/queue")
-    public GithubRepositorySavedResponse addGithubRepo(@RequestBody AddGithupRepoRequestBody requestBody) {
-
-        if (StringUtils.isBlank(requestBody.getOwner())) {
-            throw BadRequestException.noOwnerSpecified();
+        @Operation(summary = "Get all github order entries")
+        @ApiResponse(responseCode = "200", description = "All github order entries", content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, array = @ArraySchema(schema = @Schema(implementation = GithubRepositoryOrderResponse.class))))
+        @GeneralInternalServerErrorApiResponse
+        @GetMapping
+        public List<GithubRepositoryOrderResponse> getAllGithubRepositoryOrderEntries() {
+                List<GithubRepositoryOrderEntity> results = githubService.findAll();
+                return GithubRepositoryOrderResponse.toList(results);
         }
 
-        if (StringUtils.isBlank(requestBody.getRepository())) {
-            throw BadRequestException.noRepositorySpecified();
+        @Operation(summary = "Add a github entry to the queue")
+        @ApiResponse(responseCode = "200", description = "Added the specified github entry to the queue", content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(implementation = GithubRepositorySavedResponse.class)))
+        @ApiResponse(responseCode = "400", description = "Bad Request", content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(implementation = BadRequestErrorResponse.class), examples = {
+                        @ExampleObject(name = "No owner was specified", description = "No owner was specified", value = "{\"status\": \"Bad Request\", \"reason\": \"No owner was specified\", \"solution\": \"Specify an owner. For example: 'dotnet' (who is the owner for example of the repo 'core')\"}"),
+                        @ExampleObject(name = "No repository was specified", description = "No repository was specified", value = "{\"status\": \"Bad Request\", \"reason\": \"No repository was specified\", \"solution\": \"Specify a repository. For example: 'core' (the owner 'dotnet' provides for example a 'core' repository)\"}") }))
+        @GeneralInternalServerErrorApiResponse
+        @PostMapping("/queue")
+        public GithubRepositorySavedResponse addGithubRepo(@RequestBody AddGithupRepoRequestBody requestBody) {
+
+                if (StringUtils.isBlank(requestBody.getOwner())) {
+                        throw BadRequestException.noOwnerSpecified();
+                }
+
+                if (StringUtils.isBlank(requestBody.getRepository())) {
+                        throw BadRequestException.noRepositorySpecified();
+                }
+
+                long id = githubService.insertGithubRepositoryIntoQueue(
+                                requestBody.getOwner(),
+                                requestBody.getRepository(),
+                                GithubRepositoryFilter.DEFAULT);
+
+                return new GithubRepositorySavedResponse(id);
         }
 
-        long id = githubService.insertGithubRepositoryIntoQueue(
-                requestBody.getOwner(),
-                requestBody.getRepository(),
-                GithubRepositoryFilter.DEFAULT);
+        @Operation(summary = "Add a github entry to the queue while also specifying filter properties", description = "At least one filter property has to be set. Left out filter properties will be disabled.")
+        @ApiResponse(responseCode = "200", description = "Added the specified github entry with the specified filter properties to the queue", content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(implementation = GithubRepositorySavedResponse.class)))
+        @ApiResponse(responseCode = "400", description = "Bad Request", content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(implementation = BadRequestErrorResponse.class), examples = {
+                        @ExampleObject(name = "No owner was specified", description = "No owner was specified", value = "{\"status\": \"Bad Request\", \"reason\": \"No owner was specified\", \"solution\": \"Specify an owner. For example: 'dotnet' (who is the owner for example of the repo 'core')\"}"),
+                        @ExampleObject(name = "No repository was specified", description = "No repository was specified", value = "{\"status\": \"Bad Request\", \"reason\": \"No repository was specified\", \"solution\": \"Specify a repository. For example: 'core' (the owner 'dotnet' provides for example a 'core' repository)\"}"),
+                        @ExampleObject(name = "Can't disable all filter options", description = "Can't disable all filter options", value = "{\"status\": \"Bad Request\", \"reason\": \"All repository filter options are disabled\", \"solution\": \"Enable at least one repository filter option\"}") }))
+        @GeneralInternalServerErrorApiResponse
+        @PostMapping("/queue/filter")
+        public GithubRepositorySavedResponse addGithubRepoWithFilters(
+                        @RequestBody AddGithubRepoFilterRequestBody requestBody) {
 
-        return new GithubRepositorySavedResponse(id);
-    }
+                if (StringUtils.isBlank(requestBody.getOwner())) {
+                        throw BadRequestException.noOwnerSpecified();
+                }
 
-    @Operation(
-            summary = "Add a github entry to the queue while also specifying filter properties",
-            description = "At least one filter property has to be set. Left out filter properties will be disabled.")
-    @ApiResponse(
-            responseCode = "200",
-            description = "Added the specified github entry with the specified filter properties to the queue",
-            content = @Content(
-                    mediaType = MediaType.APPLICATION_JSON_VALUE,
-                    schema = @Schema(implementation = GithubRepositorySavedResponse.class)))
-    @ApiResponse(
-            responseCode = "400",
-            description = "Bad Request",
-            content = @Content(
-                    mediaType = MediaType.APPLICATION_JSON_VALUE,
-                    schema = @Schema(implementation = BadRequestErrorResponse.class),
-                    examples = {
-                            @ExampleObject(
-                                    name = "No owner was specified",
-                                    description = "No owner was specified",
-                                    value = "{\"status\": \"Bad Request\", \"reason\": \"No owner was specified\", \"solution\": \"Specify an owner. For example: 'dotnet' (who is the owner for example of the repo 'core')\"}"),
-                            @ExampleObject(
-                                    name = "No repository was specified",
-                                    description = "No repository was specified",
-                                    value = "{\"status\": \"Bad Request\", \"reason\": \"No repository was specified\", \"solution\": \"Specify a repository. For example: 'core' (the owner 'dotnet' provides for example a 'core' repository)\"}"),
-                            @ExampleObject(
-                                    name = "Can't disable all filter options",
-                                    description = "Can't disable all filter options",
-                                    value = "{\"status\": \"Bad Request\", \"reason\": \"All repository filter options are disabled\", \"solution\": \"Enable at least one repository filter option\"}")}))
-    @GeneralInternalServerErrorApiResponse
-    @PostMapping("/queue/filter")
-    public GithubRepositorySavedResponse addGithubRepoWithFilters(
-            @RequestBody AddGithubRepoFilterRequestBody requestBody) {
+                if (StringUtils.isBlank(requestBody.getRepository())) {
+                        throw BadRequestException.noRepositorySpecified();
+                }
 
-        if (StringUtils.isBlank(requestBody.getOwner())) {
-            throw BadRequestException.noOwnerSpecified();
+                if (requestBody.isRepositoryFilterEmpty()
+                                || requestBody.getRepositoryFilter().areAllFilterOptionsDisabled()) {
+                        throw BadRequestException.cantDisableAllRepositoryFilterOptions();
+                }
+
+                GithubRepositoryFilter githubRepositoryFilter = githubRepositoryFilterFactory
+                                .fromRepoFilterRequestModel(requestBody.getRepositoryFilter());
+
+                long id = githubService.insertGithubRepositoryIntoQueue(
+                                requestBody.getOwner(), requestBody.getRepository(), githubRepositoryFilter);
+
+                return new GithubRepositorySavedResponse(id);
         }
 
-        if (StringUtils.isBlank(requestBody.getRepository())) {
-            throw BadRequestException.noRepositorySpecified();
+        @Operation(summary = "Download the produced rdf file")
+        @ApiResponse(responseCode = "200", description = "Rdf file", content = @Content(mediaType = MediaType.APPLICATION_OCTET_STREAM_VALUE))
+        @ApiResponse(responseCode = "400", description = "Bad Request", content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(implementation = BadRequestErrorResponse.class), examples = {
+                        @ExampleObject(name = "Invalid id was specified", description = "Invalid id was specified", value = "{\"status\": \"Bad Request\", \"reason\": \"Invalid id 'blub' was given\", \"solution\": \"Provide a valid id. Example id: 55\"}"),
+                        @ExampleObject(name = "No rdf file is available yet", description = "No rdf file is available yet", value = "{\"status\": \"Bad Request\", \"reason\": \"Specified repository was not yet processed and therefore also doesnt contain a rdf file to download\", \"solution\": \"Wait until the repository was successfully processed (ie. status of repository is 'DONE')\"}") }))
+        @ApiResponse(responseCode = "404", description = "Not found", content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(implementation = NotFoundErrorResponse.class), examples = {
+                        @ExampleObject(name = "No github to rdf entry found", description = "No github to rdf entry found", value = "{\"status\": \"Not found\", \"reason\": \"No github to rdf entry found for id '3'\", \"solution\": \"Provide an id for an existing github to rdf entry\"}") }))
+        @GeneralInternalServerErrorApiResponse
+        @GetMapping(path = "/rdf/download/{id}", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
+        public @ResponseBody Resource downloadRdf(@PathVariable("id") String id,
+                        HttpServletResponse httpServletResponse) throws SQLException, IOException {
+
+                long longId = LongUtils.convertStringToLongIdOrThrowException(id);
+
+                if (!githubService.isRdfFileAvailable(longId)) {
+                        throw BadRequestException.noRdfFileAvailableYet();
+                }
+
+                File tempRdfFile = githubService.getTempRdfFile(longId);
+
+                Resource responseResource = new InputStreamResource(
+                                new BufferedInputStream(new FileInputStream(tempRdfFile)));
+
+                httpServletResponse.setHeader("Content-Disposition", "attachment; filename=\"rdf.ttl\"");
+
+                return responseResource;
         }
 
-        if (requestBody.isRepositoryFilterEmpty() || requestBody.getRepositoryFilter().areAllFilterOptionsDisabled()) {
-            throw BadRequestException.cantDisableAllRepositoryFilterOptions();
+        @Operation(summary = "Delete specified github order entry and all connected data")
+        @ApiResponse(responseCode = "204", description = "Successfully deleted github entry")
+        @InvalidLongIdBadRequestApiResponse
+        @ApiResponse(responseCode = "404", description = "Not found", content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(implementation = NotFoundErrorResponse.class), examples = {
+                        @ExampleObject(name = "No github to rdf entry found", description = "No github to rdf entry found", value = "{\"status\": \"Not found\", \"reason\": \"No github to rdf entry found for id '3'\", \"solution\": \"Provide an id for an existing github to rdf entry\"}") }))
+        @GeneralInternalServerErrorApiResponse
+        @DeleteMapping(path = "/rdf/completedelete/{id}")
+        public ResponseEntity<Void> deleteGitAndRdf(@PathVariable("id") String id) {
+
+                long longId = LongUtils.convertStringToLongIdOrThrowException(id);
+                githubService.completeDelete(longId);
+
+                return new ResponseEntity<>(HttpStatus.NO_CONTENT);
         }
-
-        GithubRepositoryFilter githubRepositoryFilter
-                = githubRepositoryFilterFactory.fromRepoFilterRequestModel(requestBody.getRepositoryFilter());
-
-        long id = githubService.insertGithubRepositoryIntoQueue(
-                requestBody.getOwner(), requestBody.getRepository(), githubRepositoryFilter);
-
-        return new GithubRepositorySavedResponse(id);
-    }
-
-    @Operation(summary = "Download the produced rdf file")
-    @ApiResponse(
-            responseCode = "200",
-            description = "Rdf file",
-            content = @Content(
-                    mediaType = MediaType.APPLICATION_OCTET_STREAM_VALUE))
-    @ApiResponse(
-            responseCode = "400",
-            description = "Bad Request",
-            content = @Content(
-                    mediaType = MediaType.APPLICATION_JSON_VALUE,
-                    schema = @Schema(implementation = BadRequestErrorResponse.class),
-                    examples = {
-                            @ExampleObject(
-                                    name = "Invalid id was specified",
-                                    description = "Invalid id was specified",
-                                    value = "{\"status\": \"Bad Request\", \"reason\": \"Invalid id 'blub' was given\", \"solution\": \"Provide a valid id. Example id: 55\"}"),
-                            @ExampleObject(
-                                    name = "No rdf file is available yet",
-                                    description = "No rdf file is available yet",
-                                    value = "{\"status\": \"Bad Request\", \"reason\": \"Specified repository was not yet processed and therefore also doesnt contain a rdf file to download\", \"solution\": \"Wait until the repository was successfully processed (ie. status of repository is 'DONE')\"}")}))
-    @ApiResponse(
-            responseCode = "404",
-            description = "Not found",
-            content = @Content(
-                    mediaType = MediaType.APPLICATION_JSON_VALUE,
-                    schema = @Schema(implementation = NotFoundErrorResponse.class),
-                    examples = {
-                            @ExampleObject(
-                                    name = "No github to rdf entry found",
-                                    description = "No github to rdf entry found",
-                                    value = "{\"status\": \"Not found\", \"reason\": \"No github to rdf entry found for id '3'\", \"solution\": \"Provide an id for an existing github to rdf entry\"}")}))
-    @GeneralInternalServerErrorApiResponse
-    @GetMapping(path = "/rdf/download/{id}", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
-    public @ResponseBody Resource downloadRdf(@PathVariable("id") String id, HttpServletResponse httpServletResponse) throws SQLException, IOException {
-
-        long longId = LongUtils.convertStringToLongIdOrThrowException(id);
-
-        if (!githubService.isRdfFileAvailable(longId)) {
-            throw BadRequestException.noRdfFileAvailableYet();
-        }
-
-        File tempRdfFile = githubService.getTempRdfFile(longId);
-
-        Resource responseResource = new InputStreamResource(new BufferedInputStream(new FileInputStream(tempRdfFile)));
-
-        httpServletResponse.setHeader("Content-Disposition", "attachment; filename=\"rdf.ttl\"");
-
-        return responseResource;
-    }
-
-    @Operation(summary = "Delete specified github order entry and all connected data")
-    @ApiResponse(
-            responseCode = "204",
-            description = "Successfully deleted github entry")
-    @InvalidLongIdBadRequestApiResponse
-    @ApiResponse(
-            responseCode = "404",
-            description = "Not found",
-            content = @Content(
-                    mediaType = MediaType.APPLICATION_JSON_VALUE,
-                    schema = @Schema(implementation = NotFoundErrorResponse.class),
-                    examples = {
-                            @ExampleObject(
-                                    name = "No github to rdf entry found",
-                                    description = "No github to rdf entry found",
-                                    value = "{\"status\": \"Not found\", \"reason\": \"No github to rdf entry found for id '3'\", \"solution\": \"Provide an id for an existing github to rdf entry\"}")}))
-    @GeneralInternalServerErrorApiResponse
-    @DeleteMapping(path = "/rdf/completedelete/{id}")
-    public ResponseEntity<Void> deleteGitAndRdf(@PathVariable("id") String id) {
-
-        long longId = LongUtils.convertStringToLongIdOrThrowException(id);
-        githubService.completeDelete(longId);
-
-        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
-    }
 
 }
