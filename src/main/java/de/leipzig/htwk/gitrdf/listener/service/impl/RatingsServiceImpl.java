@@ -9,6 +9,7 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import de.leipzig.htwk.gitrdf.database.common.entity.GithubRepositoryOrderEntity;
 import de.leipzig.htwk.gitrdf.database.common.entity.GithubRepositoryOrderRatingEntity;
@@ -28,6 +29,7 @@ public class RatingsServiceImpl implements RatingsService {
   @Autowired
   private GithubRepositoryOrderRatingRepository ratingRepository;
 
+  // ============== ORDER-BASED OPERATIONS ==============
 
   @Override
   public GithubRepositoryOrderEntity getOrderById(Long id) {
@@ -83,7 +85,7 @@ public class RatingsServiceImpl implements RatingsService {
     return ratings;
   }
 
-  //  METRIC-BASED OPERATIONS 
+  // ============== METRIC-BASED OPERATIONS ==============
 
   @Override
   public List<GithubRepositoryOrderRatingEntity> getRatingsByMetricId(String metricId) {
@@ -110,6 +112,7 @@ public class RatingsServiceImpl implements RatingsService {
   // ============== DOWNLOAD OPERATIONS ==============
 
   @Override
+  @Transactional(readOnly = true)
   public RdfDownloadResult createRdfDownload(List<GithubRepositoryOrderRatingEntity> ratings, String baseFilename)
       throws SQLException, IOException {
 
@@ -181,7 +184,7 @@ public class RatingsServiceImpl implements RatingsService {
     return filename;
   }
 
-  //  STATISTICS OPERATIONS 
+  // ============== STATISTICS OPERATIONS ==============
 
   @Override
   public OrderStatistics getOrderStatistics(Long orderId) {
@@ -211,7 +214,7 @@ public class RatingsServiceImpl implements RatingsService {
     return stats;
   }
 
-  //  UTILITY OPERATIONS 
+  // ============== UTILITY OPERATIONS ==============
 
   @Override
   public List<String> getAllMetricIds() {
@@ -239,7 +242,7 @@ public class RatingsServiceImpl implements RatingsService {
     return orderIds;
   }
 
-  //   HELPER METHODS 
+  // ============== PRIVATE HELPER METHODS ==============
 
   /**
    * Create filename separator for RDF export

@@ -13,6 +13,7 @@ import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -163,6 +164,7 @@ public class RatingsController {
    * 4. GET /ratings/{id}/download - Download all RDF metrics of the orderId
    */
   @GetMapping("/{id}/download")
+  @Transactional(readOnly = true)
   public ResponseEntity<Resource> downloadOrderRdf(@PathVariable Long id) {
     log.debug("Downloading all RDF for order ID: {}", id);
 
@@ -173,10 +175,14 @@ public class RatingsController {
       RatingsService.RdfDownloadResult result = ratingsService.createRdfDownload(ratings, "order_" + id);
 
       if (!result.hasContent()) {
+        log.debug("No RDF content found for order ID: {}", id);
         return ResponseEntity.noContent().build();
       }
 
       String filename = ratingsService.generateDownloadFilename("order", id, null, order);
+
+      log.debug("Returning RDF download for order ID: {} with {} files, filename: {}",
+          id, result.getFileCount(), filename);
 
       return ResponseEntity.ok()
           .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"")
@@ -194,6 +200,7 @@ public class RatingsController {
    * of orderId
    */
   @GetMapping("/{id}/download/{metricId}")
+  @Transactional(readOnly = true)
   public ResponseEntity<Resource> downloadOrderMetricRdf(@PathVariable Long id, @PathVariable String metricId) {
     log.debug("Downloading RDF for order ID: {} and metric ID: {}", id, metricId);
 
@@ -206,10 +213,14 @@ public class RatingsController {
           "order_" + id + "_metric_" + metricId);
 
       if (!result.hasContent()) {
+        log.debug("No RDF content found for order ID: {} and metric ID: {}", id, metricId);
         return ResponseEntity.noContent().build();
       }
 
       String filename = ratingsService.generateDownloadFilename("order_metric", id, metricId, order);
+
+      log.debug("Returning RDF download for order ID: {} and metric ID: {} with {} files, filename: {}",
+          id, metricId, result.getFileCount(), filename);
 
       return ResponseEntity.ok()
           .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"")
@@ -261,6 +272,7 @@ public class RatingsController {
    * metricId
    */
   @GetMapping("/metrics/{metricId}/download")
+  @Transactional(readOnly = true)
   public ResponseEntity<Resource> downloadMetricRdf(@PathVariable String metricId) {
     log.debug("Downloading all RDF for metric ID: {}", metricId);
 
@@ -270,10 +282,14 @@ public class RatingsController {
       RatingsService.RdfDownloadResult result = ratingsService.createRdfDownload(ratings, "metric_" + metricId);
 
       if (!result.hasContent()) {
+        log.debug("No RDF content found for metric ID: {}", metricId);
         return ResponseEntity.noContent().build();
       }
 
       String filename = ratingsService.generateDownloadFilename("metric", null, metricId, null);
+
+      log.debug("Returning RDF download for metric ID: {} with {} files, filename: {}",
+          metricId, result.getFileCount(), filename);
 
       return ResponseEntity.ok()
           .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"")
