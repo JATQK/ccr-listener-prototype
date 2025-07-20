@@ -49,8 +49,8 @@ public class GithubRepositoryOrderResponse {
     String repository;
 
     @Schema(description = "Number of ratings for this repository (only included in with-ratings endpoints)")
-    Long ratingsCount;
+    Long ratings;
 
-    @Schema(description = "Number of unique metrics used for this repository (only included in with-ratings endpoints)")
-    Long uniqueMetricsCount;
+    @Schema(description = "Number of statistics used for this repository (only included in with-ratings endpoints)")
+    Long statistics;
 }

@@ -15,6 +15,7 @@ import de.leipzig.htwk.gitrdf.database.common.entity.GithubRepositoryOrderEntity
 import de.leipzig.htwk.gitrdf.database.common.entity.GithubRepositoryOrderRatingEntity;
 import de.leipzig.htwk.gitrdf.database.common.repository.GithubRepositoryOrderRatingRepository;
 import de.leipzig.htwk.gitrdf.database.common.repository.GithubRepositoryOrderRepository;
+import de.leipzig.htwk.gitrdf.database.common.repository.GithubRepositoryOrderStatisticRepository;
 import de.leipzig.htwk.gitrdf.listener.api.exception.RatingsNotFoundException;
 import de.leipzig.htwk.gitrdf.listener.service.RatingsService;
 import lombok.extern.slf4j.Slf4j;
@@ -28,6 +29,9 @@ public class RatingsServiceImpl implements RatingsService {
 
   @Autowired
   private GithubRepositoryOrderRatingRepository ratingRepository;
+
+  @Autowired
+  private GithubRepositoryOrderStatisticRepository statisticRepository;
 
   // ============== ORDER-BASED OPERATIONS ==============
 
@@ -190,12 +194,12 @@ public class RatingsServiceImpl implements RatingsService {
   public OrderStatistics getOrderStatistics(Long orderId) {
     log.debug("Getting statistics for order ID: {}", orderId);
     Long totalRatings = ratingRepository.countByGithubRepositoryOrderId(orderId);
-    Long uniqueMetrics = ratingRepository.countUniqueMetricsByGithubRepositoryOrderId(orderId);
+    Long uniqueStatistics = statisticRepository.countByGithubRepositoryOrderId(orderId);
     Long ratingsWithRdf = ratingRepository.countByGithubRepositoryOrderIdWithRdfData(orderId);
 
-    OrderStatistics stats = new OrderStatistics(totalRatings.intValue(), uniqueMetrics.intValue(),
+    OrderStatistics stats = new OrderStatistics(totalRatings.intValue(), uniqueStatistics.intValue(),
         ratingsWithRdf.intValue());
-    log.debug("Order {} statistics: {} total ratings, {} unique metrics, {} with RDF data",
+    log.debug("Order {} statistics: {} total ratings, {} unique statistics, {} with RDF data",
         orderId, stats.getTotalRatings(), stats.getUniqueMetrics(), stats.getRatingsWithRdf());
     return stats;
   }
