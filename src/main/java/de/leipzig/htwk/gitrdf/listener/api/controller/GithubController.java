@@ -26,6 +26,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import de.leipzig.htwk.gitrdf.database.common.entity.GithubRepositoryFilter;
 import de.leipzig.htwk.gitrdf.database.common.entity.GithubRepositoryOrderEntity;
+import de.leipzig.htwk.gitrdf.database.common.entity.GithubRepositoryOrderAnalysisEntity;
 import de.leipzig.htwk.gitrdf.listener.api.documentation.GeneralInternalServerErrorApiResponse;
 import de.leipzig.htwk.gitrdf.listener.api.documentation.InvalidLongIdBadRequestApiResponse;
 import de.leipzig.htwk.gitrdf.listener.api.exception.BadRequestException;
@@ -60,6 +61,14 @@ public class GithubController {
         private final RatingsService ratingsService; // Add this dependency
         private final GithubRepositoryFilterFactory githubRepositoryFilterFactory;
 
+        @Operation(summary = "Get order IDs that have expert analyses")
+        @ApiResponse(responseCode = "200", description = "List of order IDs with expert analyses", content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, array = @ArraySchema(schema = @Schema(implementation = Long.class))))
+        @GeneralInternalServerErrorApiResponse
+        @GetMapping("/orders/with-experts")
+        public List<Long> getOrderIdsWithExperts() {
+                return ratingsService.getOrderIdsWithExperts();
+        }
+
         @Operation(summary = "Get all github order entries")
         @ApiResponse(responseCode = "200", description = "All github order entries", content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, array = @ArraySchema(schema = @Schema(implementation = GithubRepositoryOrderResponse.class))))
         @GeneralInternalServerErrorApiResponse
@@ -79,7 +88,8 @@ public class GithubController {
                                                 return GithubRepositoryOrderResponse.fromWithRatings(
                                                                 entity,
                                                                 stats.getTotalRatings(),
-                                                                stats.getUniqueMetrics());
+                                                                stats.getTotalStatistics(),
+                                                                stats.getTotalExperts());
                                         } catch (Exception e) {
                                                 // If there's an error getting statistics, log it and return basic
                                                 // response
@@ -172,6 +182,90 @@ public class GithubController {
                 } else {
                         return ResponseEntity.status(HttpStatus.NOT_FOUND).body("RDF file not available");
                 }
+        }
+
+        @Operation(summary = "Download all expert RDF files for an order")
+        @ApiResponse(responseCode = "200", description = "Expert RDF files download", content = @Content(mediaType = MediaType.APPLICATION_OCTET_STREAM_VALUE))
+        @ApiResponse(responseCode = "400", description = "Bad Request", content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(implementation = BadRequestErrorResponse.class)))
+        @ApiResponse(responseCode = "404", description = "Not Found", content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(implementation = NotFoundErrorResponse.class)))
+        @GeneralInternalServerErrorApiResponse
+        @InvalidLongIdBadRequestApiResponse
+        @GetMapping(value = "/rdf/experts/download/{orderId}", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
+        @ResponseBody
+        public ResponseEntity<Resource> downloadExpertRdfFiles(@PathVariable String orderId) throws SQLException, IOException {
+
+                // Use the correct method to validate and convert string to long
+                long parsedOrderId = LongUtils.convertStringToLongIdOrThrowException(orderId);
+
+                // Get all expert analyses with RDF data for this order
+                List<GithubRepositoryOrderAnalysisEntity> experts = ratingsService.getExpertsWithRdfByOrderId(parsedOrderId);
+                
+                if (experts.isEmpty()) {
+                        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                                        .body(null);
+                }
+
+                // Get the order entity for filename generation
+                GithubRepositoryOrderEntity order = ratingsService.getOrderById(parsedOrderId);
+                
+                // Create the combined RDF download
+                RatingsService.RdfDownloadResult downloadResult = ratingsService.createRdfDownload(
+                                experts, 
+                                ratingsService.generateDownloadFilename("experts", parsedOrderId, null, order));
+
+                if (!downloadResult.hasContent()) {
+                        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                                        .body(null);
+                }
+
+                String filename = ratingsService.generateDownloadFilename("experts", parsedOrderId, null, order);
+                
+                return ResponseEntity.ok()
+                                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment;filename=" + filename)
+                                .contentType(MediaType.APPLICATION_OCTET_STREAM)
+                                .body(downloadResult.getResource());
+        }
+
+        @Operation(summary = "Download all rating RDF files for an order")
+        @ApiResponse(responseCode = "200", description = "Rating RDF files download", content = @Content(mediaType = MediaType.APPLICATION_OCTET_STREAM_VALUE))
+        @ApiResponse(responseCode = "400", description = "Bad Request", content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(implementation = BadRequestErrorResponse.class)))
+        @ApiResponse(responseCode = "404", description = "Not Found", content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(implementation = NotFoundErrorResponse.class)))
+        @GeneralInternalServerErrorApiResponse
+        @InvalidLongIdBadRequestApiResponse
+        @GetMapping(value = "/rdf/ratings/download/{orderId}", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
+        @ResponseBody
+        public ResponseEntity<Resource> downloadRatingRdfFiles(@PathVariable String orderId) throws SQLException, IOException {
+
+                // Use the correct method to validate and convert string to long
+                long parsedOrderId = LongUtils.convertStringToLongIdOrThrowException(orderId);
+
+                // Get all rating analyses with RDF data for this order
+                List<GithubRepositoryOrderAnalysisEntity> ratings = ratingsService.getRatingsWithRdfByOrderId(parsedOrderId);
+                
+                if (ratings.isEmpty()) {
+                        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                                        .body(null);
+                }
+
+                // Get the order entity for filename generation
+                GithubRepositoryOrderEntity order = ratingsService.getOrderById(parsedOrderId);
+                
+                // Create the combined RDF download
+                RatingsService.RdfDownloadResult downloadResult = ratingsService.createRdfDownload(
+                                ratings, 
+                                ratingsService.generateDownloadFilename("ratings", parsedOrderId, null, order));
+
+                if (!downloadResult.hasContent()) {
+                        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                                        .body(null);
+                }
+
+                String filename = ratingsService.generateDownloadFilename("ratings", parsedOrderId, null, order);
+                
+                return ResponseEntity.ok()
+                                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment;filename=" + filename)
+                                .contentType(MediaType.APPLICATION_OCTET_STREAM)
+                                .body(downloadResult.getResource());
         }
 
         @Operation(summary = "Download RDF file")

@@ -7,7 +7,8 @@ import java.util.List;
 import org.springframework.core.io.Resource;
 
 import de.leipzig.htwk.gitrdf.database.common.entity.GithubRepositoryOrderEntity;
-import de.leipzig.htwk.gitrdf.database.common.entity.GithubRepositoryOrderRatingEntity;
+import de.leipzig.htwk.gitrdf.database.common.entity.GithubRepositoryOrderAnalysisEntity;
+import de.leipzig.htwk.gitrdf.database.common.entity.enums.AnalysisType;
 
 public interface RatingsService {
 
@@ -19,43 +20,113 @@ public interface RatingsService {
   GithubRepositoryOrderEntity getOrderById(Long id);
 
   /**
+   * Get all analyses for an order by ID
+   */
+  List<GithubRepositoryOrderAnalysisEntity> getAnalysesByOrderId(Long orderId);
+
+  /**
    * Get all ratings for an order by ID
    */
-  List<GithubRepositoryOrderRatingEntity> getRatingsByOrderId(Long orderId);
+  List<GithubRepositoryOrderAnalysisEntity> getRatingsByOrderId(Long orderId);
+
+  /**
+   * Get all statistics for an order by ID
+   */
+  List<GithubRepositoryOrderAnalysisEntity> getStatisticsByOrderId(Long orderId);
+
+  /**
+   * Get all experts for an order by ID
+   */
+  List<GithubRepositoryOrderAnalysisEntity> getExpertsByOrderId(Long orderId);
+
+  /**
+   * Get analyses for an order and specific metric
+   */
+  List<GithubRepositoryOrderAnalysisEntity> getAnalysesByOrderIdAndMetricId(Long orderId, String metricId);
 
   /**
    * Get ratings for an order and specific metric
    */
-  List<GithubRepositoryOrderRatingEntity> getRatingsByOrderIdAndMetricId(Long orderId, String metricId);
+  List<GithubRepositoryOrderAnalysisEntity> getRatingsByOrderIdAndMetricId(Long orderId, String metricId);
+
+  /**
+   * Get statistics for an order and specific metric
+   */
+  List<GithubRepositoryOrderAnalysisEntity> getStatisticsByOrderIdAndMetricId(Long orderId, String metricId);
+
+  /**
+   * Get analyses with RDF data for an order
+   */
+  List<GithubRepositoryOrderAnalysisEntity> getAnalysesWithRdfByOrderId(Long orderId);
 
   /**
    * Get ratings with RDF data for an order
    */
-  List<GithubRepositoryOrderRatingEntity> getRatingsWithRdfByOrderId(Long orderId);
+  List<GithubRepositoryOrderAnalysisEntity> getRatingsWithRdfByOrderId(Long orderId);
+
+  /**
+   * Get statistics with RDF data for an order
+   */
+  List<GithubRepositoryOrderAnalysisEntity> getStatisticsWithRdfByOrderId(Long orderId);
+
+  /**
+   * Get experts with RDF data for an order
+   */
+  List<GithubRepositoryOrderAnalysisEntity> getExpertsWithRdfByOrderId(Long orderId);
+
+  /**
+   * Get analyses with RDF data for an order and specific metric
+   */
+  List<GithubRepositoryOrderAnalysisEntity> getAnalysesWithRdfByOrderIdAndMetricId(Long orderId, String metricId);
 
   /**
    * Get ratings with RDF data for an order and specific metric
    */
-  List<GithubRepositoryOrderRatingEntity> getRatingsWithRdfByOrderIdAndMetricId(Long orderId, String metricId);
+  List<GithubRepositoryOrderAnalysisEntity> getRatingsWithRdfByOrderIdAndMetricId(Long orderId, String metricId);
+
+  /**
+   * Get statistics with RDF data for an order and specific metric
+   */
+  List<GithubRepositoryOrderAnalysisEntity> getStatisticsWithRdfByOrderIdAndMetricId(Long orderId, String metricId);
 
   // ============== METRIC-BASED OPERATIONS ==============
 
   /**
+   * Get all analyses for a specific metric across all orders
+   */
+  List<GithubRepositoryOrderAnalysisEntity> getAnalysesByMetricId(String metricId);
+
+  /**
    * Get all ratings for a specific metric across all orders
    */
-  List<GithubRepositoryOrderRatingEntity> getRatingsByMetricId(String metricId);
+  List<GithubRepositoryOrderAnalysisEntity> getRatingsByMetricId(String metricId);
+
+  /**
+   * Get all statistics for a specific metric across all orders
+   */
+  List<GithubRepositoryOrderAnalysisEntity> getStatisticsByMetricId(String metricId);
+
+  /**
+   * Get analyses with RDF data for a specific metric across all orders
+   */
+  List<GithubRepositoryOrderAnalysisEntity> getAnalysesWithRdfByMetricId(String metricId);
 
   /**
    * Get ratings with RDF data for a specific metric across all orders
    */
-  List<GithubRepositoryOrderRatingEntity> getRatingsWithRdfByMetricId(String metricId);
+  List<GithubRepositoryOrderAnalysisEntity> getRatingsWithRdfByMetricId(String metricId);
+
+  /**
+   * Get statistics with RDF data for a specific metric across all orders
+   */
+  List<GithubRepositoryOrderAnalysisEntity> getStatisticsWithRdfByMetricId(String metricId);
 
   // ============== DOWNLOAD OPERATIONS ==============
 
   /**
-   * Create downloadable RDF resource for multiple ratings
+   * Create downloadable RDF resource for multiple analyses
    */
-  RdfDownloadResult createRdfDownload(List<GithubRepositoryOrderRatingEntity> ratings, String baseFilename)
+  RdfDownloadResult createRdfDownload(List<GithubRepositoryOrderAnalysisEntity> analyses, String baseFilename)
       throws SQLException, IOException;
 
   /**
@@ -92,6 +163,11 @@ public interface RatingsService {
    */
   List<Long> getOrderIdsByMetricId(String metricId);
 
+  /**
+   * Get all order IDs that have expert analyses
+   */
+  List<Long> getOrderIdsWithExperts();
+
   // ============== RESULT CLASSES ==============
 
   /**
@@ -124,17 +200,33 @@ public interface RatingsService {
    */
   public static class OrderStatistics {
     private final int totalRatings;
+    private final int totalStatistics;
+    private final int totalExperts;
     private final int uniqueMetrics;
     private final int ratingsWithRdf;
+    private final int statisticsWithRdf;
+    private final int expertsWithRdf;
 
-    public OrderStatistics(int totalRatings, int uniqueMetrics, int ratingsWithRdf) {
+    public OrderStatistics(int totalRatings, int totalStatistics, int totalExperts, int uniqueMetrics, int ratingsWithRdf, int statisticsWithRdf, int expertsWithRdf) {
       this.totalRatings = totalRatings;
+      this.totalStatistics = totalStatistics;
+      this.totalExperts = totalExperts;
       this.uniqueMetrics = uniqueMetrics;
       this.ratingsWithRdf = ratingsWithRdf;
+      this.statisticsWithRdf = statisticsWithRdf;
+      this.expertsWithRdf = expertsWithRdf;
     }
 
     public int getTotalRatings() {
       return totalRatings;
+    }
+
+    public int getTotalStatistics() {
+      return totalStatistics;
+    }
+
+    public int getTotalExperts() {
+      return totalExperts;
     }
 
     public int getUniqueMetrics() {
@@ -144,6 +236,14 @@ public interface RatingsService {
     public int getRatingsWithRdf() {
       return ratingsWithRdf;
     }
+
+    public int getStatisticsWithRdf() {
+      return statisticsWithRdf;
+    }
+
+    public int getExpertsWithRdf() {
+      return expertsWithRdf;
+    }
   }
 
   /**
@@ -151,17 +251,25 @@ public interface RatingsService {
    */
   public static class MetricStatistics {
     private final int totalRatings;
+    private final int totalStatistics;
     private final int uniqueOrders;
     private final int ratingsWithRdf;
+    private final int statisticsWithRdf;
 
-    public MetricStatistics(int totalRatings, int uniqueOrders, int ratingsWithRdf) {
+    public MetricStatistics(int totalRatings, int totalStatistics, int uniqueOrders, int ratingsWithRdf, int statisticsWithRdf) {
       this.totalRatings = totalRatings;
+      this.totalStatistics = totalStatistics;
       this.uniqueOrders = uniqueOrders;
       this.ratingsWithRdf = ratingsWithRdf;
+      this.statisticsWithRdf = statisticsWithRdf;
     }
 
     public int getTotalRatings() {
       return totalRatings;
+    }
+
+    public int getTotalStatistics() {
+      return totalStatistics;
     }
 
     public int getUniqueOrders() {
@@ -170,6 +278,10 @@ public interface RatingsService {
 
     public int getRatingsWithRdf() {
       return ratingsWithRdf;
+    }
+
+    public int getStatisticsWithRdf() {
+      return statisticsWithRdf;
     }
   }
 }

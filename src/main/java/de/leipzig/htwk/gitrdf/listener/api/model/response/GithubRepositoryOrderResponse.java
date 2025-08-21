@@ -18,12 +18,13 @@ public class GithubRepositoryOrderResponse {
                 entity.getOwnerName(),
                 entity.getRepositoryName(),
                 null, // ratingsCount - not included in basic response
-                null // uniqueMetricsCount - not included in basic response
+                null, // uniqueMetricsCount - not included in basic response
+                null // expertsCount - not included in basic response
         );
     }
 
     public static GithubRepositoryOrderResponse fromWithRatings(GithubRepositoryOrderEntity entity, long ratingsCount,
-            long uniqueMetricsCount) {
+            long uniqueMetricsCount, long expertsCount) {
         return new GithubRepositoryOrderResponse(
                 entity.getId(),
                 entity.getStatus(),
@@ -31,7 +32,8 @@ public class GithubRepositoryOrderResponse {
                 entity.getOwnerName(),
                 entity.getRepositoryName(),
                 ratingsCount,
-                uniqueMetricsCount);
+                uniqueMetricsCount,
+                expertsCount);
     }
 
     public static List<GithubRepositoryOrderResponse> toList(List<GithubRepositoryOrderEntity> entities) {
@@ -51,6 +53,9 @@ public class GithubRepositoryOrderResponse {
     @Schema(description = "Number of ratings for this repository (only included in with-ratings endpoints)")
     Long ratings;
 
-    @Schema(description = "Number of statistics used for this repository (only included in with-ratings endpoints)")
+    @Schema(description = "Number of statistics for this repository (only included in with-ratings endpoints)")
     Long statistics;
+
+    @Schema(description = "Number of experts for this repository (only included in with-ratings endpoints)")
+    Long experts;
 }

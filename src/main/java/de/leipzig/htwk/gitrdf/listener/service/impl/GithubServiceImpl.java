@@ -74,7 +74,14 @@ public class GithubServiceImpl implements GithubService {
             throw NotFoundException.githubEntryNotFound(id);
         }
 
-        return githubRepositoryOrderEntity.getStatus().equals(GitRepositoryOrderStatus.DONE);
+        // Check if order is done
+        if (!githubRepositoryOrderEntity.getStatus().equals(GitRepositoryOrderStatus.DONE)) {
+            return false;
+        }
+
+        // Check if the RDF LOB data actually exists
+        GithubRepositoryOrderEntityLobs lob = entityManager.find(GithubRepositoryOrderEntityLobs.class, id);
+        return lob != null && lob.getRdfFile() != null;
     }
 
     @Transactional
@@ -82,6 +89,14 @@ public class GithubServiceImpl implements GithubService {
     public File getTempRdfFile(long id) throws SQLException, IOException {
 
         GithubRepositoryOrderEntityLobs lob = entityManager.find(GithubRepositoryOrderEntityLobs.class, id);
+
+        if (lob == null) {
+            throw NotFoundException.githubEntryNotFound(id);
+        }
+
+        if (lob.getRdfFile() == null) {
+            throw NotFoundException.githubEntryNotFound(id);
+        }
 
         File tempFile = Files.createTempFile("RdfFileData", ".ttl").toFile();
 
